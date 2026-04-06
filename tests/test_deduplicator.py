@@ -41,3 +41,13 @@ def test_filter_seen_returns_empty_when_all_seen():
     result = filter_seen(TWEETS, mock_client)
 
     assert result == []
+
+
+def test_filter_seen_returns_all_on_supabase_error():
+    mock_client = MagicMock()
+    mock_client.table.return_value.select.return_value.in_.return_value.execute.side_effect = Exception("connection error")
+
+    result = filter_seen(TWEETS, mock_client)
+
+    # Safe degradation: all tweets returned when Supabase fails
+    assert len(result) == 3
