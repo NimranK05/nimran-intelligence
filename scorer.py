@@ -46,8 +46,9 @@ def softmax_rank(scored_tweets: list[dict], top_n: int = 3) -> list[dict]:
 
 def assign_pillars(top3: list[dict]) -> list[dict]:
     """
-    Tags each tweet with a pillar: Breakdown (highest velocity),
-    Stack (highest authority), Leverage (rest).
+    Tags each tweet dict in-place with a 'pillar' key.
+    Breakdown = highest velocity, Stack = highest authority, Leverage = rest.
+    Note: modifies the dicts in top3 directly (in-place mutation).
     """
     if not top3:
         return top3
@@ -88,6 +89,8 @@ def _timing(t: dict) -> float:
     except (ValueError, TypeError):
         return 0.0
     age = datetime.now(timezone.utc) - created
+    if age < timedelta(0):
+        return 0.0
     if age <= timedelta(hours=6):
         return 1.0
     if age <= timedelta(hours=24):

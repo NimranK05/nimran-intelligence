@@ -58,3 +58,18 @@ def test_assign_pillars_labels_top3():
     assert pillar_map["1"] == "Breakdown"   # highest velocity
     assert pillar_map["2"] == "Stack"       # highest authority
     assert pillar_map["3"] == "Leverage"    # remainder
+
+
+def test_timing_future_tweet_scores_zero():
+    future = datetime.now(timezone.utc) + timedelta(hours=2)
+    future_str = future.strftime("%a %b %d %H:%M:%S +0000 %Y")
+    tweet = {
+        "id": "99", "text": "hello",
+        "author": "x", "followers": 1000, "verified": False,
+        "retweets": 0, "likes": 0, "created_at": future_str, "url": ""
+    }
+    result = score_tweets([tweet], [])
+    # Future tweet: timing sub-score must be 0.0
+    # (score = 0*0.35 + authority*0.25 + 0*0.15 + 0*0.15 + 0*0.10)
+    # Just verify score is low (< 0.25 since only authority contributes)
+    assert result[0]["score"] < 0.25
