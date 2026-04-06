@@ -27,21 +27,28 @@ def fetch_tweets(
     }
 
     run = client.actor(ACTOR_ID).call(run_input=run_input)
+    if run is None:
+        raise RuntimeError(f"Apify actor {ACTOR_ID} failed to start or timed out")
     dataset = run.get_dataset()
 
     tweets = []
     for item in dataset.iterate_items():
         if len(tweets) >= max_items:
             break
-        tweets.append(_normalise(item))
+        normalised = _normalise(item)
+        if normalised is not None:
+            tweets.append(normalised)
 
     return tweets
 
 
-def _normalise(raw: dict) -> dict:
+def _normalise(raw: dict) -> dict | None:
     user = raw.get("user", {})
+    tweet_id = raw.get("id") or raw.get("id_str", "")
+    if not tweet_id:
+        return None
     return {
-        "id": raw.get("id") or raw.get("id_str", ""),
+        "id": tweet_id,
         "text": raw.get("full_text") or raw.get("text", ""),
         "author": user.get("screen_name", ""),
         "followers": user.get("followers_count", 0),
