@@ -31,9 +31,12 @@ def fetch_tweets(
     account_queries = [f"from:{handle} lang:en" for handle in accounts]
     search_terms = [keyword_query] + account_queries
 
+    per_term = max(1, max_items // len(search_terms))
+
     run_input = {
         "searchTerms": search_terms,
         "maxItems": max_items,
+        "maxResultsPerSearchTerm": per_term,  # cap per term so total stays near max_items
         "queryType": "Top",               # return top-performing tweets, not just latest
         "min_faves": 50,                  # minimum 50 likes — filters out noise at source
         "include:nativeretweets": False,  # original content only
@@ -45,7 +48,8 @@ def fetch_tweets(
         raise RuntimeError(f"Apify actor {ACTOR_ID} failed to start or timed out")
 
     dataset_id = run.get("defaultDatasetId")
-    items = client.dataset(dataset_id).list_items(limit=max_items).items
+    # Hard slice as a safety net in case the actor overshoots
+    items = client.dataset(dataset_id).list_items(limit=max_items).items[:max_items]
 
     tweets = []
     for item in items:

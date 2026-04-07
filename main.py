@@ -9,7 +9,7 @@ from scorer       import score_tweets, softmax_rank, assign_pillars
 from notifier     import post_to_discord
 from persister    import save_seen_tweets, save_picks
 
-MAX_AGE_HOURS = 36  # drop tweets older than this
+MAX_AGE_HOURS = 48  # drop tweets older than this
 
 # --- Configuration ---
 SEED_KEYWORDS = [
@@ -17,15 +17,15 @@ SEED_KEYWORDS = [
 ]
 WATCHED_ACCOUNTS = [
     # AI companies — announcements here = content ideas
-    "AnthropicAI", "OpenAI", "GoogleDeepMind", "xai",
+    "AnthropicAI", "OpenAI", "GoogleDeepMind", "xai", "claudeai",
     # Key voices — insight, takes, industry moves
     "sama", "karpathy", "emollick", "levelsio",
     # Reference creators — study what they cover
     "gregisenberg", "nicksaraevv", "heyiamnate",
 ]
 NICHE_KEYWORDS = [
-    "AI", "LLM", "Claude", "GPT", "Gemini", "agent", "model",
-    "automation", "Anthropic", "OpenAI", "Grok", "Copilot",
+    "AI", "LLM", "Claude", "Claude Code" "GPT", "Gemini", "agent", "model",
+    "automation", "Anthropic", "OpenAI", "Grok",
     "prompt", "RAG", "fine-tun", "inference", "token",
 ]
 
