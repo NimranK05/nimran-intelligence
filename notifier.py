@@ -37,5 +37,8 @@ def _build_embed(rank: int, tweet: dict) -> dict:
         "fields": [
             {"name": "Velocity", "value": f"{velocity_pct}%", "inline": True},
             {"name": "Authority", "value": f"{authority_pct}%", "inline": True},
+            {"name": "Likes", "value": f"{tweet.get('likes', 0):,}", "inline": True},
+            {"name": "Bookmarks", "value": f"{tweet.get('bookmarks', 0):,}", "inline": True},
+            {"name": "Views", "value": f"{tweet.get('views', 0):,}", "inline": True},
         ],
     }

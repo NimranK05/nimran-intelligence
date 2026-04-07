@@ -5,8 +5,8 @@ import numpy as np
 
 NICHE_KEYWORDS_DEFAULT = ["AI", "LLM", "agent", "GPT", "model", "prompt"]
 
-# Normalisation ceilings (adjust if your audience differs)
-MAX_ENGAGEMENT = 5000.0    # retweets*2 + likes ceiling
+# Normalisation ceilings
+MAX_ENGAGEMENT = 10_000.0   # retweets*2 + likes + bookmarks*3 ceiling
 MAX_FOLLOWERS  = 500_000.0  # followers ceiling for log normalisation
 
 
@@ -71,7 +71,8 @@ def assign_pillars(top3: list[dict]) -> list[dict]:
 # --- sub-scorers ---
 
 def _velocity(t: dict) -> float:
-    eng = t["retweets"] * 2 + t["likes"]
+    # Bookmarks = strongest intent signal (people save what they want to act on)
+    eng = t["retweets"] * 2 + t["likes"] + t.get("bookmarks", 0) * 3
     return min(eng / MAX_ENGAGEMENT, 1.0)
 
 
@@ -84,8 +85,13 @@ def _authority(t: dict) -> float:
 
 def _timing(t: dict) -> float:
     try:
-        created = datetime.strptime(t["created_at"], "%a %b %d %H:%M:%S +0000 %Y")
-        created = created.replace(tzinfo=timezone.utc)
+        # Try ISO 8601 first (common for modern scrapers like pear_fight)
+        if "T" in t["created_at"]:
+            created = datetime.fromisoformat(t["created_at"].replace("Z", "+00:00"))
+        else:
+            # Fallback to legacy Twitter format
+            created = datetime.strptime(t["created_at"], "%a %b %d %H:%M:%S +0000 %Y")
+            created = created.replace(tzinfo=timezone.utc)
     except (ValueError, TypeError):
         return 0.0
     age = datetime.now(timezone.utc) - created

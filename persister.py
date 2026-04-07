@@ -29,6 +29,9 @@ def save_picks(top3: list[dict], supabase_client) -> None:
             "pillar":        t.get("pillar", ""),
             "velocity_raw":  t["velocity_raw"],
             "authority_raw": t["authority_raw"],
+            "likes":         t.get("likes", 0),
+            "bookmarks":     t.get("bookmarks", 0),
+            "views":         t.get("views", 0),
         }
         for t in top3
     ]
