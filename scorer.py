@@ -10,15 +10,24 @@ MAX_ENGAGEMENT = 10_000.0   # retweets*2 + likes + bookmarks*3 ceiling
 MAX_FOLLOWERS  = 500_000.0  # followers ceiling for log normalisation
 
 
-def score_tweets(tweets: list[dict], niche_keywords: list[str] = None) -> list[dict]:
+def score_tweets(
+    tweets: list[dict],
+    niche_keywords: list[str] = None,
+    account_multipliers: dict[str, float] = None,
+) -> list[dict]:
     """
     Returns the input tweets enriched with score, velocity_raw, authority_raw.
+
+    account_multipliers maps Twitter handle -> float multiplier from Supabase
+    account_feedback. Accounts you've consistently used get a higher multiplier;
+    ones you ignore get a lower one. Defaults to 1.0 (no effect) when absent.
     """
     keywords = niche_keywords or NICHE_KEYWORDS_DEFAULT
+    multipliers = account_multipliers or {}
     result = []
     for t in tweets:
         v = _velocity(t)
-        a = _authority(t)
+        a = _authority(t, multipliers.get(t.get("author", ""), 1.0))
         ti = _timing(t)
         r = _replyability(t)
         n = _niche_fit(t, keywords)
@@ -76,11 +85,11 @@ def _velocity(t: dict) -> float:
     return min(eng / MAX_ENGAGEMENT, 1.0)
 
 
-def _authority(t: dict) -> float:
+def _authority(t: dict, multiplier: float = 1.0) -> float:
     score = math.log10(t["followers"] + 1) / math.log10(MAX_FOLLOWERS + 1)
     if t.get("verified"):
         score += 0.1
-    return min(score, 1.0)
+    return min(score * multiplier, 1.0)
 
 
 def _timing(t: dict) -> float:

@@ -76,8 +76,12 @@ def main():
         print("No in-niche tweets to process. Exiting.")
         return
 
+    print("Loading account authority multipliers...")
+    account_multipliers = _load_multipliers(sb)
+    print(f"  Loaded {len(account_multipliers)} multipliers.")
+
     print("Scoring...")
-    scored = score_tweets(new_tweets, NICHE_KEYWORDS)
+    scored = score_tweets(new_tweets, NICHE_KEYWORDS, account_multipliers)
 
     print("Ranking (softmax top 3)...")
     top3 = softmax_rank(scored, top_n=3)
@@ -86,16 +90,22 @@ def main():
     for t in top3:
         print(f"  [{t['pillar']}] @{t['author']} score={t['score']} — {t['text'][:60]}")
 
-    print("Saving to Supabase...")
-    save_seen_tweets(raw_tweets, sb)   # mark ALL fetched as seen
-    save_picks(top3, sb)
-    print("  Saved.")
-
     print("Posting to Discord...")
-    post_to_discord(top3, webhook_url)
+    message_ids = post_to_discord(top3, webhook_url)
     print("  Posted.")
 
+    print("Saving to Supabase...")
+    save_seen_tweets(raw_tweets, sb)
+    save_picks(top3, message_ids, sb)
+    print("  Saved.")
+
     print("Done.")
+
+
+def _load_multipliers(supabase_client) -> dict[str, float]:
+    """Returns {handle: authority_multiplier} for all tracked accounts."""
+    rows = supabase_client.table("account_feedback").select("handle,authority_multiplier").execute()
+    return {r["handle"]: r["authority_multiplier"] for r in (rows.data or [])}
 
 
 def _parse_age(created_at: str) -> datetime:

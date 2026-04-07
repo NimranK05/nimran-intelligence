@@ -7,17 +7,24 @@ PILLAR_COLOURS = {
 }
 
 
-def post_to_discord(top3: list[dict], webhook_url: str) -> None:
+def post_to_discord(top3: list[dict], webhook_url: str) -> list[dict]:
     """
-    Posts top 3 tweets to Discord as a single webhook message with 3 embeds.
-    Raises RuntimeError if Discord returns a non-2xx status.
-    """
-    embeds = [_build_embed(rank, tweet) for rank, tweet in enumerate(top3, start=1)]
-    payload = {"username": "Tweet Scout", "embeds": embeds}
+    Posts each tweet as a separate Discord message so reactions can target
+    individual picks. Uses ?wait=true to receive the message ID back.
 
-    resp = requests.post(webhook_url, json=payload, timeout=10)
-    if not (200 <= resp.status_code < 300):
-        raise RuntimeError(f"Discord webhook failed: {resp.status_code} — {resp.text}")
+    Returns a list of dicts: [{"tweet_url": ..., "discord_message_id": ...}, ...]
+    Raises RuntimeError if any Discord request fails.
+    """
+    results = []
+    for rank, tweet in enumerate(top3, start=1):
+        embed = _build_embed(rank, tweet)
+        payload = {"username": "Tweet Scout", "embeds": [embed]}
+        resp = requests.post(f"{webhook_url}?wait=true", json=payload, timeout=10)
+        if not (200 <= resp.status_code < 300):
+            raise RuntimeError(f"Discord webhook failed: {resp.status_code} — {resp.text}")
+        message_id = resp.json().get("id")
+        results.append({"tweet_url": tweet.get("url", ""), "discord_message_id": message_id})
+    return results
 
 
 def _build_embed(rank: int, tweet: dict) -> dict:
@@ -31,7 +38,8 @@ def _build_embed(rank: int, tweet: dict) -> dict:
         "description": (
             f"**@{tweet['author']}** (Score: {score_pct}%)\n\n"
             f"{tweet['text']}\n\n"
-            f"[View tweet]({tweet['url']})"
+            f"[View tweet]({tweet['url']})\n\n"
+            f"React ✅ if you used this · ❌ if not useful"
         ),
         "color": PILLAR_COLOURS.get(pillar, 0x95A5A6),
         "fields": [
