@@ -31,12 +31,11 @@ def fetch_tweets(
     account_queries = [f"from:{handle} lang:en" for handle in accounts]
     search_terms = [keyword_query] + account_queries
 
-    per_term = max(1, max_items // len(search_terms))
+    per_term = max(1, -(-max_items // len(search_terms)))  # ceiling division
 
     run_input = {
         "searchTerms": search_terms,
-        "maxItems": max_items,
-        "maxResultsPerSearchTerm": per_term,  # cap per term so total stays near max_items
+        "maxItems": per_term,  # actor applies this per search term, so divide by term count
         "queryType": "Top",               # return top-performing tweets, not just latest
         "min_faves": 50,                  # minimum 50 likes — filters out noise at source
         "include:nativeretweets": False,  # original content only
