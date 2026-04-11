@@ -33,11 +33,15 @@ def _build_embed(rank: int, tweet: dict) -> dict:
     velocity_pct = int(tweet["velocity_raw"] * 100)
     authority_pct = int(tweet["authority_raw"] * 100)
 
+    text = tweet['text']
+    if len(text) > 3000:
+        text = text[:3000] + "…"
+
     return {
         "title": f"#{rank} [{pillar}] — Score: {score_pct}%",
         "description": (
             f"**@{tweet['author']}** (Score: {score_pct}%)\n\n"
-            f"{tweet['text']}\n\n"
+            f"{text}\n\n"
             f"[View tweet]({tweet['url']})\n\n"
             f"React ✅ if you used this · ❌ if not useful"
         ),

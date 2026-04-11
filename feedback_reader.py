@@ -38,7 +38,7 @@ def run() -> None:
 
     # Already-logged message IDs — skip these
     logged_resp = sb.table("pick_feedback").select("discord_message_id").execute()
-    logged_ids  = {r["discord_message_id"] for r in (logged_resp.data or [])}
+    logged_ids  = {str(r["discord_message_id"]) for r in (logged_resp.data or [])}
 
     processed = 0
     for pick in picks:
